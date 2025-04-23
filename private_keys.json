@@ -1,0 +1,38 @@
+{
+    "Travel Request Agent": {
+        "identity_key": "32411bfd4dbeb1604191eb0e8af1b027fb968b9eba696218e00fcd069682b9ba",
+        "wallet_key": "SYT0nDK/u9/xZ2iLYQAJwJclPktFmnGtj8gfyyGQIUU="
+    },
+    "Travel Planning Agent": {
+        "identity_key": "8815fb8e812b6a0f457f8342ffba58d38ee10a5bde23b28da25384bc269f4b1c",
+        "wallet_key": "JlPkkInEpDxf4XVi9pKQTVvh0ZoXW9vxPy7BgfZgYXM="
+    },
+    "travel_planner": {
+        "identity_key": "26020d3e780162f20c514211dd50316e958d0bdcee121d299ca36a8d76ee0f29",
+        "wallet_key": "RaEo7ZYcAhWvZ/3zFeAeAdadx0maDHXPH2t7IuDgQLc="
+    },
+    "weather_advisor": {
+        "identity_key": "2a58520d99e2742020eac97020c61693d58e6367a3c2a26eb86659b8f537b354",
+        "wallet_key": "BZHjEa53LUV94Wss8LPn3pamp70ovp1YBiKRWafi+Z8="
+    },
+    "budget_planner": {
+        "identity_key": "9f0f65274a55012f1ee575324d73e8d7c8931224013863880cc2c302ce1c7240",
+        "wallet_key": "d2bnwRphQNfkJQbJtxxrDsQ9XHvQx3f69fvnXV+GHKQ="
+    },
+    "photo_spots_finder": {
+        "identity_key": "fc2ff7dea9bbee483fc8969636b0ad3c623707cee4dddf496a4175aa57e0cced",
+        "wallet_key": "c72Y0LCmFLHvO/err5lTP1gzIINM0ZqbGn+Ea5i/Nrw="
+    },
+    "dietary_planner": {
+        "identity_key": "11a7d29c302581ce51fe268084101cfe81743cdf02b8966098273de93bdcec38",
+        "wallet_key": "61NzcGt2tVSHWicFKDEAIAqxMhNXB8HeKsMZWU+kEKI="
+    },
+    "transportation_advisor": {
+        "identity_key": "20d4c99e2786a64b6bebe586a301042435002fe841ae18a1fb8639c766e91479",
+        "wallet_key": "HgzP1DL4PSKDKLzwAKg+uJauS76kEvukACm7Jy4q8Ug="
+    },
+    "events_finder": {
+        "identity_key": "7c928a13062249d6f025998562ee94848f5ab28e79d8b688beaae7abdaab7d2f",
+        "wallet_key": "BpGqSzgdkkafLt5TYsgTUIG2u3ddjzGMLIQomUQkUsw="
+    }
+}

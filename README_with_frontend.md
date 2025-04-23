@@ -116,21 +116,22 @@ python rest_client.py "Paris, France" 2023-08-01 2023-08-07 2000 "Art, history, 
 ```
 zenjourney/
 ├── .git/
-├── frontend/                # Next.js frontend application
+├── frontend/              # Next.js frontend application
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── components/  # UI components
-│   │   │   ├── page.tsx     # Main page
-│   │   │   └── layout.tsx   # App layout
-│   ├── public/              # Static assets
-│   ├── package.json         # Frontend dependencies
-│   └── README.md            # Frontend documentation
-├── travel_request_agent.py  # Agent that sends travel requests
-├── travel_planning_agent.py # Agent that processes requests and generates plans
-├── run_travel_agents.py     # Script to run both agents using Bureau
-├── rest_client.py           # CLI client for the REST API
-├── requirements.txt         # Python dependencies
-└── README.md                # This file
+│   │   │   ├── components/
+│   │   │   ├── page.tsx
+│   │   │   └── layout.tsx
+│   │   │   
+│   │   ├── public/
+│   │   ├── package.json
+│   │   └── README.md
+│   ├── travel_request_agent.py  # Agent that sends travel requests
+│   ├── travel_planning_agent.py # Agent that processes requests and generates plans
+│   ├── run_travel_agents.py     # Script to run both agents using Bureau
+│   ├── rest_client.py           # CLI client for the REST API
+│   ├── requirements.txt         # Python dependencies
+│   └── README.md               # This file
 ```
 
 ## Based On
