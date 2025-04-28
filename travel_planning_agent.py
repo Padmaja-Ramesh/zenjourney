@@ -1,5 +1,8 @@
 from uagents import Agent, Context, Model
 from fastapi import FastAPI, Response
+from datetime import datetime, timedelta
+import random
+import json
 
 # Data model for travel requests (must match the request agent)
 class TravelRequest(Model):
@@ -19,7 +22,7 @@ planning_agent = Agent(
 # Configure FastAPI app with CORS
 @planning_agent.on_event("startup")
 async def setup_fastapi(ctx: Context):
-    app = planning_agent.get_fastapi_app()
+    app = FastAPI()
     
     # Add CORS middleware
     from fastapi.middleware.cors import CORSMiddleware
@@ -32,60 +35,103 @@ async def setup_fastapi(ctx: Context):
     )
 
 # Model for sending travel plans
+class DailyPlan(Model):
+    weather: str
+    breakfast: str
+    must_visit: str
+    local_event: str
+    dinner: str
+    hotel_suggestion: str
+    travel_distance: str
+
 class TravelPlan(Model):
     destination: str
-    itinerary: str
+    itinerary: dict  # Changed to dict to store daily plans
     estimated_cost: float
+    hotel_suggestions: list
+    total_days: int
 
 @planning_agent.on_event('startup')
 async def startup_handler(ctx: Context):
     ctx.logger.info(f'Travel Planning Agent started with address: {ctx.agent.address}')
 
-@planning_agent.on_message(model=TravelRequest)
-async def handle_travel_request(ctx: Context, sender: str, msg: TravelRequest):
-    ctx.logger.info(f'Received travel request from {sender}:')
-    ctx.logger.info(f'Destination: {msg.destination}')
-    ctx.logger.info(f'Dates: {msg.start_date} to {msg.end_date}')
-    ctx.logger.info(f'Budget: ${msg.budget}')
-    ctx.logger.info(f'Preferences: {msg.preferences}')
-    
-    # Process the request and create a travel plan (in a real app, this would involve more complex logic)
-    plan = create_travel_plan(msg)
-    
-    # Send the plan back to the requesting agent
-    await ctx.send(sender, plan)
+def get_random_weather():
+    return f"{random.randint(15, 30)}°C, {random.choice(['Sunny', 'Partly Cloudy', 'Cloudy', 'Rainy'])}"
 
-def create_travel_plan(request: TravelRequest) -> TravelPlan:
-    """Generate a travel plan based on the request (simplified for this example)"""
+def get_random_hotel():
+    return random.choice([
+        "Grand Hotel",
+        "City View Inn",
+        "Riverside Hotel",
+        "Central Plaza",
+        "Garden Resort"
+    ])
+
+def get_random_restaurant():
+    return random.choice([
+        "Local Bistro",
+        "Traditional Tavern",
+        "Gourmet Restaurant",
+        "Street Food Market",
+        "Café Central"
+    ])
+
+def get_random_attraction():
+    return random.choice([
+        "Historic Castle",
+        "Art Museum",
+        "Botanical Garden",
+        "City Center",
+        "Local Market"
+    ])
+
+def get_random_event():
+    return random.choice([
+        "Art Gallery Exhibition",
+        "Local Music Festival",
+        "Food Market",
+        "Cultural Show",
+        "Historical Tour"
+    ])
+
+def create_daily_plan(day_number):
+    return {
+        "weather": get_random_weather(),
+        "breakfast": f"{get_random_restaurant()} - Local Breakfast",
+        "must_visit": f"{get_random_attraction()} - Less crowded in the morning",
+        "local_event": get_random_event(),
+        "dinner": f"{get_random_restaurant()} - Local Specialties",
+        "hotel_suggestion": get_random_hotel(),
+        "travel_distance": f"{random.randint(5, 20)} km from hotel"
+    }
+
+def create_travel_plan(request: TravelRequest) -> dict:
+    """Generate a detailed travel plan based on the request"""
     
-    # In a real application, this function would:
-    # 1. Query external APIs for flights, hotels, attractions
-    # 2. Use AI to optimize an itinerary based on preferences
-    # 3. Calculate costs and manage the budget
+    # Calculate number of days
+    start_date = datetime.strptime(request.start_date, "%Y-%m-%d")
+    end_date = datetime.strptime(request.end_date, "%Y-%m-%d")
+    total_days = (end_date - start_date).days + 1
     
-    if request.destination == "Tokyo, Japan":
-        itinerary = """
-Day 1: Arrive in Tokyo, check-in at hotel
-Day 2: Visit Tsukiji Fish Market, Senso-ji Temple, and Tokyo Skytree
-Day 3: Explore Shinjuku and Shibuya districts
-Day 4: Day trip to Mt. Fuji
-Day 5: Visit Akihabara electronics district and Tokyo National Museum
-Day 6: Explore Harajuku and Meiji Shrine
-Day 7: Day trip to Kamakura
-Day 8: Shopping in Ginza
-Day 9: Visit Tokyo Disneyland
-Day 10: Departure
-"""
-        estimated_cost = 2300.0
-    else:
-        itinerary = f"Custom 10-day itinerary for {request.destination} based on your preferences: {request.preferences}"
-        estimated_cost = request.budget * 0.9  # Slightly under budget
+    # Generate daily plans
+    daily_plans = {}
+    for day in range(1, total_days + 1):
+        daily_plans[f"Day {day}"] = create_daily_plan(day)
     
-    return TravelPlan(
-        destination=request.destination,
-        itinerary=itinerary,
-        estimated_cost=estimated_cost
-    )
+    # Generate hotel suggestions
+    hotel_suggestions = [get_random_hotel() for _ in range(3)]
+    
+    # Calculate estimated cost
+    base_cost = sum(hotel["price"] for hotel in hotel_suggestions[:1]) * total_days
+    estimated_cost = base_cost * 1.5  # Include food, activities, etc.
+    
+    return {
+        "destination": request.destination,
+        "itinerary": daily_plans,
+        "estimated_cost": estimated_cost,
+        "hotel_suggestions": hotel_suggestions,
+        "total_days": total_days
+    }
 
 # Add a REST endpoint to allow external systems to request travel plans
 class RestRequest(Model):
@@ -95,21 +141,45 @@ class RestRequest(Model):
     budget: float
     preferences: str
 
-@planning_agent.on_rest_post("/travel/plan", RestRequest, TravelPlan)
-async def handle_rest_request(ctx: Context, request: RestRequest) -> TravelPlan:
-    ctx.logger.info(f"Received REST request for travel plan to {request.destination}")
-    
-    # Convert REST request to our internal TravelRequest model
-    travel_request = TravelRequest(
-        destination=request.destination,
-        start_date=request.start_date,
-        end_date=request.end_date,
-        budget=request.budget,
-        preferences=request.preferences
-    )
-    
-    # Use the same planning logic
-    return create_travel_plan(travel_request)
+@planning_agent.on_rest_post("/travel/plan")
+async def handle_rest_request(ctx: Context, request: dict):
+    try:
+        # Extract request parameters
+        destination = request.get("destination", "")
+        start_date = request.get("start_date", "")
+        end_date = request.get("end_date", "")
+        budget = float(request.get("budget", 0))
+        preferences = request.get("preferences", "")
+        
+        # Calculate number of days
+        start = datetime.strptime(start_date, "%Y-%m-%d")
+        end = datetime.strptime(end_date, "%Y-%m-%d")
+        total_days = (end - start).days + 1
+        
+        # Generate daily plans
+        daily_plans = {}
+        for day in range(1, total_days + 1):
+            daily_plans[f"Day {day}"] = create_daily_plan(day)
+        
+        # Create response
+        response = {
+            "destination": destination,
+            "itinerary": daily_plans,
+            "estimated_cost": budget * 0.9,  # 90% of budget
+            "total_days": total_days
+        }
+        
+        return Response(
+            content=json.dumps(response, indent=2),
+            media_type="application/json"
+        )
+        
+    except Exception as e:
+        return Response(
+            content=json.dumps({"error": str(e)}),
+            media_type="application/json",
+            status_code=500
+        )
 
 if __name__ == "__main__":
     planning_agent.run() 

@@ -7,6 +7,10 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from fetch_ai_agent import FetchAIAgent
+
+# Initialize Fetch AI Agent
+fetch_ai = FetchAIAgent()
 
 # ----- Message Models -----
 
@@ -21,6 +25,7 @@ class TravelPlan(Model):
     destination: str
     itinerary: str
     estimated_cost: float
+    calendar_events: list = []  # New field for calendar events
 
 class WeatherRequest(Model):
     destination: str
@@ -127,75 +132,102 @@ async def travel_agent_startup(ctx: Context):
 
 @travel_agent.on_message(model=TravelRequest)
 async def handle_travel_request(ctx: Context, sender: str, msg: TravelRequest):
-    ctx.logger.info(f"Received travel request for {msg.destination}")
-    
-    # Calculate trip duration in days
-    start_date = datetime.strptime(msg.start_date, "%Y-%m-%d")
-    end_date = datetime.strptime(msg.end_date, "%Y-%m-%d")
-    duration_days = (end_date - start_date).days + 1
-    
-    # Request weather information
-    ctx.logger.info("Requesting weather information...")
-    weather_req = WeatherRequest(
-        destination=msg.destination,
-        start_date=msg.start_date,
-        end_date=msg.end_date
-    )
-    weather_resp, weather_status = await ctx.send_and_receive(
-        weather_agent.address, weather_req, response_type=WeatherResponse
-    )
-    
-    # Request budget breakdown
-    ctx.logger.info("Requesting budget breakdown...")
-    budget_req = BudgetRequest(
-        destination=msg.destination,
-        total_budget=msg.budget,
-        duration_days=duration_days
-    )
-    budget_resp, budget_status = await ctx.send_and_receive(
-        budget_agent.address, budget_req, response_type=BudgetResponse
-    )
-    
-    # Request photo spots
-    ctx.logger.info("Requesting photo spots...")
-    photo_req = PhotoSpotsRequest(destination=msg.destination)
-    photo_resp, photo_status = await ctx.send_and_receive(
-        photo_spots_agent.address, photo_req, response_type=PhotoSpotsResponse
-    )
-    
-    # Request dietary recommendations
-    ctx.logger.info("Requesting dietary recommendations...")
-    diet_req = DietaryRequest(
-        destination=msg.destination,
-        preferences=msg.preferences
-    )
-    diet_resp, diet_status = await ctx.send_and_receive(
-        dietary_agent.address, diet_req, response_type=DietaryResponse
-    )
-    
-    # Request transportation options
-    ctx.logger.info("Requesting transportation options...")
-    transport_req = TransportationRequest(
-        destination=msg.destination,
-        duration_days=duration_days
-    )
-    transport_resp, transport_status = await ctx.send_and_receive(
-        transportation_agent.address, transport_req, response_type=TransportationResponse
-    )
-    
-    # Request local events
-    ctx.logger.info("Requesting local events...")
-    events_req = EventsRequest(
-        destination=msg.destination,
-        start_date=msg.start_date,
-        end_date=msg.end_date
-    )
-    events_resp, events_status = await ctx.send_and_receive(
-        events_agent.address, events_req, response_type=EventsResponse
-    )
-    
-    # Compile the comprehensive travel plan
-    itinerary = f"""
+    try:
+        # Parse dates
+        start_date = datetime.strptime(msg.start_date, "%Y-%m-%d")
+        end_date = datetime.strptime(msg.end_date, "%Y-%m-%d")
+        
+        # Create calendar events for the trip
+        calendar_event = await fetch_ai.create_calendar_event(
+            title=f"Trip to {msg.destination}",
+            start_time=start_date,
+            end_time=end_date,
+            description=f"Travel plan with budget: ${msg.budget}"
+        )
+        
+        # Create agentic workflow for the trip
+        workflow_steps = [
+            {"step": "weather_check", "agent": "weather_agent"},
+            {"step": "budget_planning", "agent": "budget_agent"},
+            {"step": "transportation", "agent": "transportation_agent"},
+            {"step": "events", "agent": "events_agent"},
+            {"step": "dietary", "agent": "dietary_agent"},
+            {"step": "photo_spots", "agent": "photo_spots_agent"}
+        ]
+        
+        workflow = await fetch_ai.create_agentic_workflow(
+            workflow_name=f"Travel_Plan_{msg.destination}_{start_date.date()}",
+            steps=workflow_steps
+        )
+        
+        # Execute the workflow
+        await fetch_ai.execute_workflow(workflow.get("workflow_id"))
+        
+        # Calculate trip duration in days
+        duration_days = (end_date - start_date).days + 1
+        
+        # Request weather information
+        ctx.logger.info("Requesting weather information...")
+        weather_req = WeatherRequest(
+            destination=msg.destination,
+            start_date=msg.start_date,
+            end_date=msg.end_date
+        )
+        weather_resp, weather_status = await ctx.send_and_receive(
+            weather_agent.address, weather_req, response_type=WeatherResponse
+        )
+        
+        # Request budget breakdown
+        ctx.logger.info("Requesting budget breakdown...")
+        budget_req = BudgetRequest(
+            destination=msg.destination,
+            total_budget=msg.budget,
+            duration_days=duration_days
+        )
+        budget_resp, budget_status = await ctx.send_and_receive(
+            budget_agent.address, budget_req, response_type=BudgetResponse
+        )
+        
+        # Request photo spots
+        ctx.logger.info("Requesting photo spots...")
+        photo_req = PhotoSpotsRequest(destination=msg.destination)
+        photo_resp, photo_status = await ctx.send_and_receive(
+            photo_spots_agent.address, photo_req, response_type=PhotoSpotsResponse
+        )
+        
+        # Request dietary recommendations
+        ctx.logger.info("Requesting dietary recommendations...")
+        diet_req = DietaryRequest(
+            destination=msg.destination,
+            preferences=msg.preferences
+        )
+        diet_resp, diet_status = await ctx.send_and_receive(
+            dietary_agent.address, diet_req, response_type=DietaryResponse
+        )
+        
+        # Request transportation options
+        ctx.logger.info("Requesting transportation options...")
+        transport_req = TransportationRequest(
+            destination=msg.destination,
+            duration_days=duration_days
+        )
+        transport_resp, transport_status = await ctx.send_and_receive(
+            transportation_agent.address, transport_req, response_type=TransportationResponse
+        )
+        
+        # Request local events
+        ctx.logger.info("Requesting local events...")
+        events_req = EventsRequest(
+            destination=msg.destination,
+            start_date=msg.start_date,
+            end_date=msg.end_date
+        )
+        events_resp, events_status = await ctx.send_and_receive(
+            events_agent.address, events_req, response_type=EventsResponse
+        )
+        
+        # Compile the comprehensive travel plan
+        itinerary = f"""
 TRAVEL PLAN FOR {msg.destination.upper()}
 {msg.start_date} to {msg.end_date} ({duration_days} days)
 
@@ -243,21 +275,25 @@ NOTES:
 - Estimated total cost: ${msg.budget:.2f}
 - For detailed day-by-day planning, consult with a local tour guide
 """
-    
-    estimated_cost = msg.budget
-    if isinstance(transport_resp, TransportationResponse):
-        # Adjust with actual transportation cost estimate
-        estimated_cost = min(estimated_cost, msg.budget)
-    
-    # Create the final travel plan
-    travel_plan = TravelPlan(
-        destination=msg.destination,
-        itinerary=itinerary,
-        estimated_cost=estimated_cost
-    )
-    
-    # Return the plan to the sender
-    await ctx.send(sender, travel_plan)
+        
+        estimated_cost = msg.budget
+        if isinstance(transport_resp, TransportationResponse):
+            # Adjust with actual transportation cost estimate
+            estimated_cost = min(estimated_cost, msg.budget)
+        
+        # Create the final travel plan
+        travel_plan = TravelPlan(
+            destination=msg.destination,
+            itinerary=itinerary,
+            estimated_cost=estimated_cost,
+            calendar_events=[calendar_event]
+        )
+        
+        # Return the plan to the sender
+        await ctx.send(sender, travel_plan)
+        
+    except Exception as e:
+        await ctx.send(sender, {"error": str(e)})
 
 # ----- Travel Agent REST API -----
 

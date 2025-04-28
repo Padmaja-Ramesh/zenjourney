@@ -41,10 +41,11 @@ const TravelForm: FC<TravelFormProps> = ({ onSubmit, loading }) => {
           <input
             type="text"
             id="destination"
+            name="destination"
+            placeholder="Enter destination"
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded text-black"
-            placeholder="e.g. Tokyo, Japan"
+            className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
             required
           />
         </div>
@@ -56,10 +57,11 @@ const TravelForm: FC<TravelFormProps> = ({ onSubmit, loading }) => {
             </label>
             <input
               type="date"
-              id="startDate"
+              id="start_date"
+              name="start_date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded text-black"
+              className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
@@ -70,10 +72,11 @@ const TravelForm: FC<TravelFormProps> = ({ onSubmit, loading }) => {
             </label>
             <input
               type="date"
-              id="endDate"
+              id="end_date"
+              name="end_date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded text-black"
+              className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
@@ -86,11 +89,11 @@ const TravelForm: FC<TravelFormProps> = ({ onSubmit, loading }) => {
           <input
             type="number"
             id="budget"
+            name="budget"
+            placeholder="Enter budget in USD"
             value={budget}
             onChange={(e) => setBudget(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded text-black"
-            placeholder="e.g. 2500"
-            min="1"
+            className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
             required
           />
         </div>
@@ -101,11 +104,12 @@ const TravelForm: FC<TravelFormProps> = ({ onSubmit, loading }) => {
           </label>
           <textarea
             id="preferences"
+            name="preferences"
+            placeholder="Enter your travel preferences (e.g., food, activities, interests)"
             value={preferences}
             onChange={(e) => setPreferences(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded text-black"
-            placeholder="e.g. Cultural experiences, good food, technology"
-            rows={3}
+            className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+            rows={4}
             required
           />
         </div>

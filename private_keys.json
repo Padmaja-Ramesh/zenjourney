@@ -34,5 +34,9 @@
     "events_finder": {
         "identity_key": "7c928a13062249d6f025998562ee94848f5ab28e79d8b688beaae7abdaab7d2f",
         "wallet_key": "BpGqSzgdkkafLt5TYsgTUIG2u3ddjzGMLIQomUQkUsw="
+    },
+    "fetch_ai_agent": {
+        "identity_key": "5ffee411143ceac9bdf52b05bfc24c3203d821d653db402ca8099480479044de",
+        "wallet_key": "qbwQ2IaEQl6LAyh4q1GkiX/B7tK4VolrPdbZyN9xHG4="
     }
 }

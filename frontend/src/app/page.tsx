@@ -8,14 +8,53 @@ import TravelPlanDisplay from './components/TravelPlanDisplay'
 
 interface TravelPlan {
   destination: string;
-  itinerary: string;
+  itinerary: { [key: string]: {
+    weather: string;
+    breakfast: string;
+    must_visit: {
+      attraction: string;
+      crowd_info: string;
+      recommended_time: string;
+    };
+    local_event: {
+      name: string;
+      type: string;
+      duration: string;
+    };
+    dinner: string;
+    travel_tips: {
+      morning_activity: string;
+      transport: string;
+      local_customs: string;
+    };
+  }};
   estimated_cost: number;
+  hotel_suggestions?: Array<{
+    name: string;
+    rating: number;
+    price_per_night: number;
+    amenities: string[];
+    location: string;
+  }>;
+  travel_tips?: {
+    best_time_to_visit: string;
+    local_transportation: string;
+    currency: string;
+    language: string;
+    emergency_numbers: {
+      police: string;
+      ambulance: string;
+      tourist_helpline: string;
+    };
+  };
 }
 
 export default function Home() {
   const [loading, setLoading] = useState<boolean>(false)
   const [travelPlan, setTravelPlan] = useState<TravelPlan | null>(null)
   const [error, setError] = useState<string>('')
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const itemsPerPage = 3 // Show 3 days per page
 
   const handleSubmit = async (formData: {
     destination: string;
@@ -29,7 +68,7 @@ export default function Home() {
     setTravelPlan(null)
     
     try {
-      const response = await fetch('http://localhost:8001/travel/plan', {
+      const response = await fetch('http://localhost:8080/travel/plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +120,7 @@ export default function Home() {
     };
     
     try {
-      const response = await fetch('http://localhost:8001/travel/plan', {
+      const response = await fetch('http://localhost:8080/travel/plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -149,6 +188,12 @@ export default function Home() {
     }
   ];
 
+  const totalPages = travelPlan ? Math.ceil(Object.keys(travelPlan.itinerary).length / itemsPerPage) : 0
+  const currentDays = travelPlan ? Object.entries(travelPlan.itinerary).slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  ) : []
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
@@ -183,7 +228,7 @@ export default function Home() {
                       placeholder="Where would you like to go?"
                       value={searchParams.destination}
                       onChange={handleChange}
-                      className="w-full p-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
                       required
                     />
                   </div>
@@ -195,13 +240,13 @@ export default function Home() {
                       name="budget"
                       value={searchParams.budget}
                       onChange={handleChange}
-                      className="w-full p-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
                       required
                     >
-                      <option value="">Select your budget</option>
-                      <option value="budget">Budget ($)</option>
-                      <option value="moderate">Moderate ($$)</option>
-                      <option value="luxury">Luxury ($$$)</option>
+                      <option value="" className="bg-gray-700 text-white">Select your budget</option>
+                      <option value="budget" className="bg-gray-700 text-white">Budget ($)</option>
+                      <option value="moderate" className="bg-gray-700 text-white">Moderate ($$)</option>
+                      <option value="luxury" className="bg-gray-700 text-white">Luxury ($$$)</option>
                     </select>
                   </div>
                   
@@ -216,7 +261,7 @@ export default function Home() {
                       max="30"
                       value={searchParams.days}
                       onChange={handleChange}
-                      className="w-full p-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
                       required
                     />
                   </div>
@@ -271,19 +316,151 @@ export default function Home() {
               
               {travelPlan && !loading && (
                 <div>
-                  <div className="mb-6">
-                    <h3 className="text-xl font-semibold text-white">{travelPlan.destination}</h3>
-                    <p className="text-green-400 font-medium text-lg mt-1">
+                  <div className="mb-8 text-center">
+                    <h3 className="text-2xl font-bold text-white mb-2">{travelPlan.destination}</h3>
+                    <p className="text-green-400 font-medium text-lg">
                       Estimated Cost: ${travelPlan.estimated_cost.toFixed(2)}
                     </p>
                   </div>
                   
-                  <div>
-                    <h4 className="font-medium mb-3 text-white">Your Itinerary:</h4>
-                    <div className="bg-gray-800/80 p-5 rounded-lg whitespace-pre-line text-gray-200">
-                      {travelPlan.itinerary}
-                    </div>
+                  {/* Highlights View with Pagination */}
+                  <div className="space-y-6">
+                    {currentDays.map(([day, plan]) => (
+                      <div key={day} className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 p-6 rounded-xl shadow-lg border border-gray-700/50">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-xl font-bold text-white">{day}</h4>
+                          <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm">
+                            {plan.weather}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-4">
+                            <div className="bg-gray-700/30 p-4 rounded-lg">
+                              <div className="flex items-center gap-2 mb-2">
+                                <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                                <h5 className="font-semibold text-blue-400">Main Attraction</h5>
+                              </div>
+                              <p className="text-gray-200">{plan.must_visit.attraction}</p>
+                              <p className="text-sm text-gray-400 mt-1">{plan.must_visit.crowd_info}</p>
+                            </div>
+                            
+                            <div className="bg-gray-700/30 p-4 rounded-lg">
+                              <div className="flex items-center gap-2 mb-2">
+                                <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                                </svg>
+                                <h5 className="font-semibold text-purple-400">Local Event</h5>
+                              </div>
+                              <p className="text-gray-200">{plan.local_event.name}</p>
+                              <p className="text-sm text-gray-400 mt-1">{plan.local_event.type}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            <div className="bg-gray-700/30 p-4 rounded-lg">
+                              <div className="flex items-center gap-2 mb-2">
+                                <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                                  <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                                </svg>
+                                <h5 className="font-semibold text-green-400">Dining</h5>
+                              </div>
+                              <p className="text-gray-200">{plan.dinner}</p>
+                            </div>
+                            
+                            <div className="bg-gray-700/30 p-4 rounded-lg">
+                              <div className="flex items-center gap-2 mb-2">
+                                <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                </svg>
+                                <h5 className="font-semibold text-red-400">Travel Tips</h5>
+                              </div>
+                              <p className="text-gray-200">{plan.travel_tips.morning_activity}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-8 space-x-4">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="px-6 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Previous
+                      </button>
+                      <div className="flex items-center gap-2">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                              currentPage === page
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            } transition-colors`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="px-6 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors flex items-center gap-2"
+                      >
+                        Next
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Hotel Suggestions */}
+                  {travelPlan.hotel_suggestions && (
+                    <div className="mt-12">
+                      <h4 className="text-xl font-bold text-white mb-6 text-center">Recommended Hotels</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {travelPlan.hotel_suggestions.map((hotel, index) => (
+                          <div key={index} className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 p-6 rounded-xl shadow-lg border border-gray-700/50">
+                            <h5 className="font-bold text-white text-lg mb-2">{hotel.name}</h5>
+                            <div className="flex items-center gap-1 mb-3">
+                              {[...Array(5)].map((_, i) => (
+                                <svg
+                                  key={i}
+                                  className={`w-5 h-5 ${i < hotel.rating ? 'text-yellow-400' : 'text-gray-600'}`}
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              ))}
+                            </div>
+                            <p className="text-green-400 font-medium mb-2">${hotel.price_per_night}/night</p>
+                            <p className="text-gray-400 mb-3">{hotel.location}</p>
+                            <div className="flex flex-wrap gap-2">
+                              {hotel.amenities.map((amenity, i) => (
+                                <span key={i} className="px-3 py-1 bg-gray-700/50 text-gray-300 rounded-full text-sm">
+                                  {amenity}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -366,13 +543,13 @@ export default function Home() {
       <section id="advanced-form" className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white">Advanced Trip Planning</h2>
+            <h2 className="text-3xl font-bold text-white">Detailed Travel Planning</h2>
             <p className="mt-4 max-w-2xl mx-auto text-gray-400">
-              For more detailed travel planning with custom dates and preferences
+              Get a comprehensive travel plan with detailed daily activities and recommendations
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-8">
             <TravelForm onSubmit={handleSubmit} loading={loading} />
             <TravelPlanDisplay travelPlan={travelPlan} loading={loading} error={error} />
           </div>
