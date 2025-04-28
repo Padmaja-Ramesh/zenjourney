@@ -5,7 +5,7 @@ import sys
 def query_travel_api(destination, start_date, end_date, budget, preferences):
     """Send a request to the travel planning API and print the response"""
     
-    url = "http://localhost:8001/travel/plan"
+    url = "https://zenjourney.onrender.com"
     
     # Create request payload
     payload = {

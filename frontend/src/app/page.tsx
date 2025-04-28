@@ -68,7 +68,7 @@ export default function Home() {
     setTravelPlan(null)
     
     try {
-      const response = await fetch('http://localhost:8000/travel/plan', {
+      const response = await fetch('https://zenjourney-simple-api.onrender.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ export default function Home() {
     };
     
     try {
-      const response = await fetch('http://localhost:8000/travel/plan', {
+      const response = await fetch('https://zenjourney-simple-api.onrender.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

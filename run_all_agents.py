@@ -17,9 +17,9 @@ if __name__ == "__main__":
     
     print("\n=== ZenJourney Multi-Agent Travel Planning System ===\n")
     print("Starting all agents. The travel planning API will be available at:")
-    print("http://localhost:8001/travel/plan\n")
+    print("https://zenjourney.onrender.com\n")
     print("You can also directly test the API with a curl command:")
-    print("""curl -d '{"destination":"Paris, France", "start_date":"2023-08-01", "end_date":"2023-08-07", "budget":2000.0, "preferences":"vegetarian, museums, photography"}' -H "Content-Type: application/json" -X POST http://localhost:8001/travel/plan""")
+    print("""curl -d '{"destination":"Paris, France", "start_date":"2023-08-01", "end_date":"2023-08-07", "budget":2000.0, "preferences":"vegetarian, museums, photography"}' -H "Content-Type: application/json" -X POST https://zenjourney.onrender.com""")
     print("\nPress Ctrl+C to stop all agents")
     
     # Run the bureau
