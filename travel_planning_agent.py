@@ -19,11 +19,12 @@ planning_agent = Agent(
     endpoint=['http://localhost:8001/submit']
 )
 
+# Create FastAPI app instance
+app = FastAPI()
+
 # Configure FastAPI app with CORS
 @planning_agent.on_event("startup")
 async def setup_fastapi(ctx: Context):
-    app = FastAPI()
-    
     # Add CORS middleware
     from fastapi.middleware.cors import CORSMiddleware
     app.add_middleware(
@@ -33,6 +34,39 @@ async def setup_fastapi(ctx: Context):
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.post("/travel/plan")
+    async def handle_travel_plan(request: dict):
+        try:
+            # Extract request parameters
+            destination = request.get("destination", "")
+            start_date = request.get("start_date", "")
+            end_date = request.get("end_date", "")
+            budget = float(request.get("budget", 0))
+            preferences = request.get("preferences", "")
+            
+            # Calculate number of days
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            end = datetime.strptime(end_date, "%Y-%m-%d")
+            total_days = (end - start).days + 1
+            
+            # Generate daily plans
+            daily_plans = {}
+            for day in range(1, total_days + 1):
+                daily_plans[f"Day {day}"] = create_daily_plan(day)
+            
+            # Create response
+            response = {
+                "destination": destination,
+                "itinerary": daily_plans,
+                "estimated_cost": budget * 0.9,  # 90% of budget
+                "total_days": total_days
+            }
+            
+            return response
+            
+        except Exception as e:
+            return {"error": str(e)}
 
 # Model for sending travel plans
 class DailyPlan(Model):
@@ -140,46 +174,6 @@ class RestRequest(Model):
     end_date: str
     budget: float
     preferences: str
-
-@planning_agent.on_rest_post("/travel/plan")
-async def handle_rest_request(ctx: Context, request: dict):
-    try:
-        # Extract request parameters
-        destination = request.get("destination", "")
-        start_date = request.get("start_date", "")
-        end_date = request.get("end_date", "")
-        budget = float(request.get("budget", 0))
-        preferences = request.get("preferences", "")
-        
-        # Calculate number of days
-        start = datetime.strptime(start_date, "%Y-%m-%d")
-        end = datetime.strptime(end_date, "%Y-%m-%d")
-        total_days = (end - start).days + 1
-        
-        # Generate daily plans
-        daily_plans = {}
-        for day in range(1, total_days + 1):
-            daily_plans[f"Day {day}"] = create_daily_plan(day)
-        
-        # Create response
-        response = {
-            "destination": destination,
-            "itinerary": daily_plans,
-            "estimated_cost": budget * 0.9,  # 90% of budget
-            "total_days": total_days
-        }
-        
-        return Response(
-            content=json.dumps(response, indent=2),
-            media_type="application/json"
-        )
-        
-    except Exception as e:
-        return Response(
-            content=json.dumps({"error": str(e)}),
-            media_type="application/json",
-            status_code=500
-        )
 
 if __name__ == "__main__":
     planning_agent.run() 
