@@ -68,6 +68,7 @@ export default function Home() {
     setTravelPlan(null)
     
     try {
+      console.log('Sending request with data:', formData)
       const response = await fetch('https://zenjourney-simple-api.onrender.com/travel/plan', {
         method: 'POST',
         headers: {
@@ -76,15 +77,21 @@ export default function Home() {
         body: JSON.stringify(formData),
       })
       
+      console.log('Response status:', response.status)
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+      
       if (!response.ok) {
-        throw new Error(`Error: ${response.status}`)
+        const errorText = await response.text()
+        console.error('Error response:', errorText)
+        throw new Error(`Error: ${response.status} - ${errorText}`)
       }
       
       const data = await response.json()
+      console.log('Received data:', data)
       setTravelPlan(data)
     } catch (err) {
+      console.error('Full error:', err)
       setError('Failed to fetch travel plan. Make sure the agent API is running.')
-      console.error(err)
     } finally {
       setLoading(false)
     }
