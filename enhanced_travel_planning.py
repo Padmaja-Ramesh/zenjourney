@@ -85,7 +85,7 @@ class EventsResponse(Model):
 travel_agent = Agent(
     name="travel_planner",
     port=8001,
-    endpoint=["https://zenjourney.onrender.com"],
+    endpoint=["https://zenjourney.onrender.com/submit"],
 )
 
 weather_agent = Agent(
