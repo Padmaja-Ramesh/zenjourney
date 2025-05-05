@@ -16,8 +16,8 @@ GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
 # Configure clients
 dg_client = DeepgramClient(api_key=DEEPGRAM_API_KEY)
 genai.configure(api_key=GOOGLE_API_KEY)
-for model in genai.list_models():
-    print(model.name, "-", model.supported_generation_methods)
+# for model in genai.list_models():
+#     print(model.name, "-", model.supported_generation_methods)
 model = genai.GenerativeModel(("gemini-1.5-pro") )
 
 @app.route('/agent-response', methods=['POST'])
@@ -32,7 +32,10 @@ def agent_response():
 
     try:
         response = model.generate_content(prompt)
-        return jsonify({'response': response.text.strip()})
+        return jsonify({
+    'transcript': user_transcript,
+    'response': response.text.strip()
+})
     except Exception as e:
         return jsonify({'response': f"Error processing request: {str(e)}"})
 
