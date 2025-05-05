@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from uagents import Agent, Context, Model
 
 class WeatherRequest(Model):

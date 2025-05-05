@@ -1,0 +1,12 @@
+fastapi==0.100.0  # or newer
+uvicorn==0.21.1
+pydantic>=2.8,<3.0
+python-dateutil==2.8.2
+fetchai==0.1.41
+python-dotenv==1.0.1
+google.generativeai
+flask
+requests
+uagents==0.21.0
+openai_agent
+deepgram-sdk
