@@ -7,105 +7,167 @@ const VoiceAgent: React.FC = () => {
   const [isRecording, setIsRecording] = useState<boolean>(false);  // State to track recording status
   const [agentReply, setAgentReply] = useState<string>('');
 const [finalTranscript, setFinalTranscript] = useState('');
-  const startRecording = async (): Promise<void> => {
-    if (!navigator.mediaDevices) {
-      setTranscript('Your browser does not support speech recognition.');
-      return;
-    }
-  
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-  
-    if (!SpeechRecognition) {
-      setTranscript('Your browser does not support speech recognition.');
-      return;
-    }
-  
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = true;
-  
-    recognition.onstart = () => {
-      setIsRecording(true);
-      setTranscript('Listening...');
-    };
-    recognition.onresult = (event:  any): void => {
-        let interimTranscript = '';
-        let finalResult = '';
-      
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const result = event.results[i];
-      
-          if (result.isFinal) {
-            finalResult += result[0].transcript;
-          } else {
-            interimTranscript += result[0].transcript;
-          }
-        }
-      
-        if (interimTranscript) {
-          setTranscript(interimTranscript); // Show live partial text
-        }
-      
-        if (finalResult) {
-          setFinalTranscript(finalResult); // Store for user review
-          setTranscript(''); // Clear interim display
-          setIsRecording(false); // Stop recording UI/indicator
-        }
-      };
-      
-  
-    // recognition.onresult = async (event: SpeechRecognitionEvent): Promise<void> => {
-    //     let interimTranscript = '';
-    //     let finalTranscript = '';
-      
-    //     for (let i = event.resultIndex; i < event.results.length; i++) {
-    //       const result = event.results[i];
-      
-    //       if (result.isFinal) {
-    //         finalTranscript += result[0].transcript;
-    //       } else {
-    //         interimTranscript += result[0].transcript;
-    //       }
-    //     }
-      
-    //     if (interimTranscript) {
-    //       setTranscript(interimTranscript); // live preview
-    //     }
-      
-    //     if (finalTranscript) {
-    //       setTranscript(`You said: ${finalTranscript}`);
-    //       await sendAudioToBackend(finalTranscript);
-      
-    //       try {
-    //         const response = await fetch('http://localhost:5000/agent-response', {
-    //           method: 'POST',
-    //           headers: { 'Content-Type': 'application/json' },
-    //           body: JSON.stringify({ transcript: finalTranscript }),
-    //         });
-      
-    //         const data = await response.json();
-    //         const agentResponse = data.response;
-      
-    //         setAgentReply(agentResponse);
-    //         speakResponse(agentResponse);
-    //       } catch (err) {
-    //         setAgentReply('Sorry, there was an error processing your request.');
-    //       }
-    //     }
-    //   };
-      
-  
-    recognition.onerror = () => {
-      setTranscript('Error occurred while listening.');
-    };
-  
-    recognition.onend = () => {
-      setIsRecording(false);
-    };
-  
-    recognition.start();
+// Declare this at the top of your component
+let recognition: any;
+
+const startRecording = async (): Promise<void> => {
+  if (!navigator.mediaDevices) {
+    setTranscript('Your browser does not support speech recognition.');
+    return;
+  }
+
+  const SpeechRecognition =
+    (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    setTranscript('Your browser does not support speech recognition.');
+    return;
+  }
+
+  recognition = new SpeechRecognition(); // Use the outer scoped variable
+  recognition.lang = 'en-US';
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    setIsRecording(true);
+    setTranscript('Listening...');
   };
+
+  recognition.onresult = (event: any): void => {
+    let interimTranscript = '';
+    let finalResult = '';
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const result = event.results[i];
+
+      if (result.isFinal) {
+        finalResult += result[0].transcript;
+      } else {
+        interimTranscript += result[0].transcript;
+      }
+    }
+
+    if (interimTranscript) {
+      setTranscript(interimTranscript);
+    }
+
+    if (finalResult) {
+      setFinalTranscript(finalResult);
+      setTranscript('');
+      setIsRecording(false);
+    }
+  };
+
+  recognition.onerror = () => {
+    setTranscript('Error occurred while listening.');
+  };
+
+  recognition.onend = () => {
+    setIsRecording(false);
+  };
+
+  recognition.start();
+};
+
+//   const startRecording = async (): Promise<void> => {
+//     if (!navigator.mediaDevices) {
+//       setTranscript('Your browser does not support speech recognition.');
+//       return;
+//     }
+  
+//     const SpeechRecognition =
+//       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  
+//     if (!SpeechRecognition) {
+//       setTranscript('Your browser does not support speech recognition.');
+//       return;
+//     }
+  
+//     const recognition = new SpeechRecognition();
+//     recognition.lang = 'en-US';
+//     recognition.interimResults = true;
+  
+//     recognition.onstart = () => {
+//       setIsRecording(true);
+//       setTranscript('Listening...');
+//     };
+//     recognition.onresult = (event:  any): void => {
+//         let interimTranscript = '';
+//         let finalResult = '';
+      
+//         for (let i = event.resultIndex; i < event.results.length; i++) {
+//           const result = event.results[i];
+      
+//           if (result.isFinal) {
+//             finalResult += result[0].transcript;
+//           } else {
+//             interimTranscript += result[0].transcript;
+//           }
+//         }
+      
+//         if (interimTranscript) {
+//           setTranscript(interimTranscript); // Show live partial text
+//         }
+      
+//         if (finalResult) {
+//           setFinalTranscript(finalResult); // Store for user review
+//           setTranscript(''); // Clear interim display
+//           setIsRecording(false); // Stop recording UI/indicator
+//         }
+//       };
+      
+  
+//     // recognition.onresult = async (event: SpeechRecognitionEvent): Promise<void> => {
+//     //     let interimTranscript = '';
+//     //     let finalTranscript = '';
+      
+//     //     for (let i = event.resultIndex; i < event.results.length; i++) {
+//     //       const result = event.results[i];
+      
+//     //       if (result.isFinal) {
+//     //         finalTranscript += result[0].transcript;
+//     //       } else {
+//     //         interimTranscript += result[0].transcript;
+//     //       }
+//     //     }
+      
+//     //     if (interimTranscript) {
+//     //       setTranscript(interimTranscript); // live preview
+//     //     }
+      
+//     //     if (finalTranscript) {
+//     //       setTranscript(`You said: ${finalTranscript}`);
+//     //       await sendAudioToBackend(finalTranscript);
+      
+//     //       try {
+//     //         const response = await fetch('http://localhost:5000/agent-response', {
+//     //           method: 'POST',
+//     //           headers: { 'Content-Type': 'application/json' },
+//     //           body: JSON.stringify({ transcript: finalTranscript }),
+//     //         });
+      
+//     //         const data = await response.json();
+//     //         const agentResponse = data.response;
+      
+//     //         setAgentReply(agentResponse);
+//     //         speakResponse(agentResponse);
+//     //       } catch (err) {
+//     //         setAgentReply('Sorry, there was an error processing your request.');
+//     //       }
+//     //     }
+//     //   };
+      
+  
+//     recognition.onerror = () => {
+//       setTranscript('Error occurred while listening.');
+//     };
+  
+//     recognition.onend = () => {
+//       setIsRecording(false);
+//     };
+  
+//     recognition.start();
+//   };
   
   
   // Optional helper function for debugging or logging
