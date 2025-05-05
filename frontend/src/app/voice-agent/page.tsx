@@ -29,7 +29,7 @@ const [finalTranscript, setFinalTranscript] = useState('');
       setIsRecording(true);
       setTranscript('Listening...');
     };
-    recognition.onresult = (event: SpeechRecognitionEvent): void => {
+    recognition.onresult = (event:  any): void => {
         let interimTranscript = '';
         let finalResult = '';
       
