@@ -199,7 +199,7 @@ const handleSendTranscript = async () => {
     try {
       await sendAudioToBackend(finalTranscript);
   
-      const response = await fetch('http://localhost:5000/agent-response', {
+      const response = await fetch('https://zenjourney-1.onrender.com/agent-response', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transcript: finalTranscript }),

@@ -10,3 +10,4 @@ requests
 uagents==0.21.0
 openai_agent
 deepgram-sdk
+flask_cors
