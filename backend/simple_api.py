@@ -1,13 +1,16 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
 import google.generativeai as genai
 import logging
 import json
 import random
+import jwt
+from typing import List, Dict
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -29,7 +32,7 @@ if api_key:
             logger.info(f"Model: {m.name}, Supported methods: {m.supported_generation_methods}")
         
         # Use the latest Gemini Pro model
-        model = genai.GenerativeModel('models/gemini-1.5-pro-latest')
+        model = genai.GenerativeModel("gemini-1.0-pro")
         logger.info("Successfully configured Gemini model")
     except Exception as e:
         logger.error(f"Error configuring Gemini: {str(e)}")
@@ -55,6 +58,14 @@ class TravelRequest(BaseModel):
     end_date: str
     budget: float
     preferences: str
+
+class Analytics(BaseModel):
+    total_calls: int
+    average_duration: float
+    common_questions: List[Dict[str, str | int]]
+    
+    class Config:
+        arbitrary_types_allowed = True
 
 def generate_random_travel_plan(destination, start_date, end_date, budget, preferences):
     """Generate a travel plan with random data when OpenAI API fails"""
@@ -243,6 +254,37 @@ async def create_travel_plan(request: TravelRequest):
         logger.error(f"Error processing request: {str(e)}")
         if isinstance(e, HTTPException):
             raise e
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/admin/analytics")
+async def get_analytics(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
+    try:
+        # Verify JWT token
+        token = credentials.credentials
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        
+        # Check if user is admin
+        if not payload.get("is_admin"):
+            raise HTTPException(status_code=403, detail="Not authorized")
+        
+        # Get analytics from database
+        analytics = {
+            "total_calls": 150,  # Replace with actual database query
+            "average_duration": 5.5,  # Replace with actual database query
+            "common_questions": [
+                {"question": "How do I reset my password?", "count": 45},
+                {"question": "What are your business hours?", "count": 32},
+                {"question": "How do I update my profile?", "count": 28},
+                {"question": "Where can I find my order history?", "count": 25},
+                {"question": "How do I contact support?", "count": 20}
+            ]
+        }
+        
+        return analytics
+        
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

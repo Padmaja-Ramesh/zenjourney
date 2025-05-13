@@ -4,9 +4,20 @@ import os
 from dotenv import load_dotenv
 from deepgram import DeepgramClient, PrerecordedOptions
 import google.generativeai as genai
+from waitress import serve
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+# Comment out RAG import for now
+# from rag.engine import RAGEngine
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:3000"],  # Add your frontend URL
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # Load environment variables
 load_dotenv()
@@ -18,7 +29,18 @@ dg_client = DeepgramClient(api_key=DEEPGRAM_API_KEY)
 genai.configure(api_key=GOOGLE_API_KEY)
 # for model in genai.list_models():
 #     print(model.name, "-", model.supported_generation_methods)
-model = genai.GenerativeModel(("gemini-1.5-pro") )
+model = genai.GenerativeModel(("gemini-1.0-pro") )
+
+# Comment out RAG initialization
+# rag_engine = RAGEngine()
+
+class AudioRequest(BaseModel):
+    audio_url: str
+    user_id: str
+
+class QueryRequest(BaseModel):
+    question: str
+    user_id: str
 
 @app.route('/agent-response', methods=['POST'])
 def agent_response():
@@ -26,7 +48,7 @@ def agent_response():
     user_transcript = data.get('transcript', '')
 
     if not user_transcript:
-        return jsonify({'response': 'Sorry, I didn’t catch that.'})
+        return jsonify({'response': "Sorry, I didn't catch that."})
 
     prompt = f"You are a helpful travel assistant. The user said: '{user_transcript}'. Respond accordingly."
 
@@ -93,10 +115,49 @@ def transcribe_audio_real_time():
         if not audio_transcript:
             return jsonify({'error': 'Transcript is missing'}), 400
 
+        # Add debug logging
+        print(f"Received transcript: {audio_transcript}")
+        
         return jsonify({'transcript': audio_transcript})
 
     except Exception as e:
+        print(f"Error in transcribe_audio_real_time: {str(e)}")  # Debug logging
         return jsonify({'error': str(e)}), 500
 
+@app.post("/voice/query")
+async def process_voice_query(request: AudioRequest):
+    try:
+        # Transcribe audio
+        transcript = await transcribe_audio(request.audio_url)
+        
+        # Get user context
+        # user_context = await get_user_context(request.user_id)
+        
+        # Get response using RAG
+        # response = await rag_engine.query(transcript, user_context)
+        
+        return {
+            "transcript": transcript,
+            "response": "RAG functionality temporarily disabled"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/text/query")
+async def process_text_query(request: QueryRequest):
+    try:
+        # Get user context
+        # user_context = await get_user_context(request.user_id)
+        
+        # Get response using RAG
+        # response = await rag_engine.query(request.question, user_context)
+        
+        return {
+            "response": "RAG functionality temporarily disabled"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
+    print("Starting server on port 8002...")  # Debug logging
     serve(app, host="0.0.0.0", port=8002) 
