@@ -1,21 +1,42 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/app/lib/firebase-admin';
+import { adminAuth } from '@/app/lib/firebase-admin';
+import { cookies } from 'next/headers';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Verify admin status
-    const session = await auth();
-    if (!session?.user?.isAdmin) {
+    // Get the session cookie from the request headers
+    const cookieHeader = request.headers.get('cookie');
+    const sessionCookie = cookieHeader
+      ?.split(';')
+      .find(c => c.trim().startsWith('session='))
+      ?.split('=')[1];
+
+    if (!sessionCookie) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch analytics from your backend
-    const response = await fetch('http://localhost:8000/api/admin/analytics');
-    const data = await response.json();
+    // Verify the session cookie
+    const decodedToken = await adminAuth.verifySessionCookie(sessionCookie);
+    
+    // Check if user is admin
+    if (!decodedToken.admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    return NextResponse.json(data);
+    // Your analytics logic here
+    const analytics = {
+      total_calls: 150,
+      average_duration: 5.5,
+      common_questions: [
+        { question: "How do I reset my password?", count: 45 },
+        { question: "What are your business hours?", count: 32 },
+        // ... more questions
+      ]
+    };
+
+    return NextResponse.json(analytics);
   } catch (error) {
-    console.error('Error fetching analytics:', error);
+    console.error('Error in analytics route:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

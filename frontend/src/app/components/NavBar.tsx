@@ -1,89 +1,102 @@
 "use client"
-import { useAuth } from '@/app/components/AuthProvider';
 import { useState } from 'react';
+import { useAuth } from './AuthProvider';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const NavBar = () => {
   const { user, logOut } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const router = useRouter();
 
   const toggleDropdown = () => setDropdownOpen(prev => !prev);
 
+  const handleLogout = async () => {
+    try {
+      await logOut();
+      router.push('/login');  // Redirect to login page after logout
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   return (
-    <nav className="relative">
-      <ul className="flex space-x-6">
-        <li>
-          <a href="/" className="hover:text-blue-400 transition-colors">
-            Home
-          </a>
-        </li>
-        <li>
-          <a href="/about" className="hover:text-blue-400 transition-colors">
-            About
-          </a>
-        </li>
-        <li>
-          <a href="/contact" className="hover:text-blue-400 transition-colors">
-            Contact
-          </a>
-        </li>
-        <li>
-          <a href="/voice-agent" className="hover:text-blue-400 transition-colors">
-            Agent
-          </a>
-        </li>
+    <nav className="bg-white shadow-lg">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex">
+            <Link href="/" className="flex items-center">
+              <span className="text-xl font-bold text-gray-800">ZenJourney</span>
+            </Link>
+          </div>
 
-        {/* Avatar and Dropdown */}
-        {user ? (
-          <li className="relative">
-            <button
-              onClick={toggleDropdown}
-              className="flex items-center space-x-2 bg-gray-800 p-2 rounded-full hover:bg-gray-700 transition-colors"
-            >
-              {/* Avatar */}
-              <img
-                src={user.photoURL || '/default-avatar.png'} // Use Firebase photoURL or fallback image
-                alt="User Avatar"
-                className="w-8 h-8 rounded-full"
-              />
-              <span>{user.displayName || 'User'}</span>
-            </button>
+          <div className="flex items-center">
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={toggleDropdown}
+                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
+                >
+                  <span>{user.email}</span>
+                  <svg
+                    className={`h-5 w-5 transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
 
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 z-10">
-                <ul className="text-white">
-                  <li>
-                    <a
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
+                    <Link
                       href="/profile"
-                      className="block px-4 py-2 text-sm hover:bg-gray-700"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Profile
-                    </a>
-                  </li>
-                  <li>
+                    </Link>
+                    {user.email?.endsWith('@admin.com') && (
+                      <Link
+                        href="/admin"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
                     <button
-                      onClick={logOut}
-                      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-700"
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
-                      Log out
+                      Logout
                     </button>
-                  </li>
-                </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex space-x-4">
+                <Link
+                  href="/login"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/register"
+                  className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Register
+                </Link>
               </div>
             )}
-          </li>
-        ) : (
-          <li><a href="/login" className="hover:text-blue-400">Enter the Path</a></li>
-          
-        )}
-
-        {user?.isAdmin && (
-          <li>
-            <a href="/admin" className="hover:text-blue-400 transition-colors">
-              Admin Dashboard
-            </a>
-          </li>
-        )}
-      </ul>
+          </div>
+        </div>
+      </div>
     </nav>
   );
 };

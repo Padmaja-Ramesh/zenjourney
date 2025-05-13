@@ -1,22 +1,31 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  const session = request.cookies.get('session');
-  
+export async function middleware(request: NextRequest) {
   // Check if the request is for the admin page
   if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (!session) {
+    const sessionCookie = request.cookies.get('session');
+
+    if (!sessionCookie) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
-    
-    // Verify admin status (you'll need to implement this)
-    const isAdmin = verifyAdminStatus(session.value);
-    if (!isAdmin) {
-      return NextResponse.redirect(new URL('/', request.url));
+
+    try {
+      // Verify the session cookie
+      const response = await fetch(`${request.nextUrl.origin}/api/auth/verify`, {
+        headers: {
+          Cookie: `session=${sessionCookie.value}`,
+        },
+      });
+
+      if (!response.ok) {
+        return NextResponse.redirect(new URL('/login', request.url));
+      }
+    } catch (error) {
+      return NextResponse.redirect(new URL('/login', request.url));
     }
   }
-  
+
   return NextResponse.next();
 }
 
